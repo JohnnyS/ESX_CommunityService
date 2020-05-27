@@ -1,9 +1,10 @@
+# Security
+Tired of hackers putting your players in community service? Install this updated version with protected server events!
+- [Security FiveM Forum Thread](https://forum.cfx.re/t/re-release-esx-security-patches-updates-jail-qalle-jail-communityservice/1292760)
+
 # ESX_CommunityService
 
 An alternative form of punishment and social correction to jail. With this script, you can now send criminals in the central square, to provide community service by cleaning and gardening. Try to escape it and you will get your service extended!
-
-# Security
-Tired of hackers putting your players in community service? Install this updated version with protected server events!
 
 ### Requirements
 * ESX

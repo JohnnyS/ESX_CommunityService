@@ -19,7 +19,7 @@ git clone https://github.com/ATG-Github/ESX_CommunityService [esx]/esx_community
 ```
 
 ### Manually
-- Download https://github.com/ATG-Github/ESX_CommunityService
+- Download https://github.com/ATG-Github/ESX_CommunityService/releases/download/v2/esx_communityservice.zip
 - Put it in the `[esx]` directory
 
 

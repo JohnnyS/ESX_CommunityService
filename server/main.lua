@@ -1,29 +1,116 @@
+-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+--					Created By: apoiat   				  --
+--			 Protected By: ATG-Github AKA ATG			  --
+-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+
+
 ESX = nil
 
 TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 
+function checkIfLegit(source, target)
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	--				Let's grab our data...					  --
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	local src, tgt = source, target;
+	local xSrc, xTgt = ESX.GetPlayerFromId(src), ESX.GetPlayerFromId(tgt);
+	local srcIdent, tgtIdent = xSrc.identifier, xTgt.identifier;
+	local srcJob = xSrc.job.name;
+	local tgtJob = xTgt.job.name;
+	local srcGroup = xSrc.getGroup();
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	--				Let's define legitimacy...			      --
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	local legit = {
+		["legit"] = true,
+		["reason"] = "No flags found."
+	};
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	--				Let's test for legitimacy!			      --
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	if srcJob ~= "police" then
+		if srcGroup ~= "admin" and srcGroup ~= "superadmin" then
+			legit = {
+				["legit"] = false,
+				["reason"] = "Source does not have the police job, and is not staff."
+			}
+			return legit
+		end
+	end
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	--		     If we've made it here, it's legit!           --
+	-- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
+	return legit
+end
+
+
+function getRemainingActions(t)
+	local tgt = t;
+	local xTgt = ESX.GetPlayerFromId(tgt);
+	local identifier = xTgt.identifier;
+	local sql = MySQL.Sync.fetchScalar("SELECT actions_remaining FROM communityservice WHERE identifier = @identifier", {["identifier"] = identifier});
+	if sql == '' or sql == nil then
+		return 0
+	else
+		return tonumber(sql)
+	end
+end
 
 TriggerEvent('es:addGroupCommand', 'comserv', 'admin', function(source, args, user)
-	if args[1] and GetPlayerName(args[1]) ~= nil and tonumber(args[2]) then
-		TriggerEvent('esx_communityservice:sendToCommunityService', tonumber(args[1]), tonumber(args[2]))
+	local src = source;
+	local tgt = tonumber(args[1]);
+	if args[1] and GetPlayerName(tgt) ~= nil and tonumber(args[2]) then
+		local legit = checkIfLegit(src, tgt);
+		if legit["legit"] == true then
+			TriggerEvent('esx_communityservice:sendToCommunityService', tgt, tonumber(args[2]))
+		else
+			print(
+				string.format(
+					"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to place [^5%s^7] ^5%s^7 into community service via the ^2comserv^7 command. The legitimacy check returned ^1false^7 with the reason of ^2%s^7.",
+					GetCurrentResourceName(), src, GetPlayerName(src), tgt, GetPlayerName(tgt), legit["reason"]
+				)
+			)
+		end
 	else
-		TriggerClientEvent('chat:addMessage', source, { args = { _U('system_msn'), _U('invalid_player_id_or_actions') } } )
+		TriggerClientEvent('chat:addMessage', src, { args = { _U('system_msn'), _U('invalid_player_id_or_actions') } } )
 	end
 end, function(source, args, user)
-	TriggerClientEvent('chat:addMessage', source, { args = { _U('system_msn'), _U('insufficient_permissions') } })
+	TriggerClientEvent('chat:addMessage', src, { args = { _U('system_msn'), _U('insufficient_permissions') } })
 end, {help = _U('give_player_community'), params = {{name = "id", help = _U('target_id')}, {name = "actions", help = _U('action_count_suggested')}}})
 _U('system_msn')
 
 
 TriggerEvent('es:addGroupCommand', 'endcomserv', 'admin', function(source, args, user)
+	local src = source;
+	local tgt = tonumber(args[1]);
 	if args[1] then
-		if GetPlayerName(args[1]) ~= nil then
-			TriggerEvent('esx_communityservice:endCommunityServiceCommand', tonumber(args[1]))
+		if GetPlayerName(tgt) ~= nil then
+			local legit = checkIfLegit(src, tgt);
+			if legit["legit"] == true then
+				TriggerEvent('esx_communityservice:endCommunityServiceCommand', tgt)
+			else
+				print(
+					string.format(
+						"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to remove [^5%s^7] ^5%s^7 from community service via the ^2endcomserv^7 command. The legitimacy check returned ^1false^7 with the reason of ^2%s^7.",
+						GetCurrentResourceName(), src, GetPlayerName(src), tgt, GetPlayerName(tgt), legit["reason"]
+					)
+				)
+			end
 		else
-			TriggerClientEvent('chat:addMessage', source, { args = { _U('system_msn'), _U('invalid_player_id')  } } )
+			TriggerClientEvent('chat:addMessage', src, { args = { _U('system_msn'), _U('invalid_player_id')  } } )
 		end
 	else
-		TriggerEvent('esx_communityservice:endCommunityServiceCommand', source)
+		local legit = checkIfLegit(src, src);
+		if legit["legit"] == true then
+			TriggerEvent('esx_communityservice:endCommunityServiceCommand', src)
+		else
+			print(
+				string.format(
+					"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to remove theirself from community service via the ^2endcomserv^7 command. The legitimacy check returned ^1false^7 with the reason of ^2%s^7.",
+					GetCurrentResourceName(), src, GetPlayerName(src), legit["reason"]
+				)
+			)
+		end
 	end
 end, function(source, args, user)
 	TriggerClientEvent('chat:addMessage', source, { args = { _U('system_msn'), _U('insufficient_permissions') } })
@@ -34,16 +121,38 @@ end, {help = _U('unjail_people'), params = {{name = "id", help = _U('target_id')
 
 
 RegisterServerEvent('esx_communityservice:endCommunityServiceCommand')
-AddEventHandler('esx_communityservice:endCommunityServiceCommand', function(source)
-	if source ~= nil then
-		releaseFromCommunityService(source)
+AddEventHandler('esx_communityservice:endCommunityServiceCommand', function(t)
+	local src, tgt = source, t;
+	if tgt ~= nil then
+		local legit = checkIfLegit(src, tgt);
+		if legit["legit"] == true then
+			releaseFromCommunityService(tgt)
+		else
+			print(
+				string.format(
+					"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to remove [^5%s^7] ^5%s^7 from community service via the ^2endCommunityServiceCommand^7 event. The legitimacy check returned ^1false^7 with the reason of ^2%s^7.",
+					GetCurrentResourceName(), src, GetPlayerName(src), tgt, GetPlayerName(tgt), legit["reason"]
+				)
+			)
+		end
 	end
 end)
 
 -- unjail after time served
 RegisterServerEvent('esx_communityservice:finishCommunityService')
 AddEventHandler('esx_communityservice:finishCommunityService', function()
-	releaseFromCommunityService(source)
+	local src = source;
+	local actions = getRemainingActions(src);
+	if actions <= 1 then
+		releaseFromCommunityService(src)
+	else
+		print(
+			string.format(
+				"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to remove theirself from community service via the ^2finishCommunityService^7 event. The remaining actions were not low enough for the player to be released.",
+				GetCurrentResourceName(), src, GetPlayerName(src)
+			)
+		)
+	end
 end)
 
 
@@ -100,29 +209,42 @@ end)
 
 
 RegisterServerEvent('esx_communityservice:sendToCommunityService')
-AddEventHandler('esx_communityservice:sendToCommunityService', function(target, actions_count)
+AddEventHandler('esx_communityservice:sendToCommunityService', function(t, q)
+	local src, tgt = source, t;
+	local qty = q;
 
-	local identifier = GetPlayerIdentifiers(target)[1]
+	local legit = checkIfLegit(src, tgt);
+	if legit["legit"] == true then
+		local xSrc, xTgt = ESX.GetPlayerFromId(src), ESX.GetPlayerFromId(tgt);
+		local srcIdent, tgtIdent = xSrc.identifier, xTgt.identifier;
 
-	MySQL.Async.fetchAll('SELECT * FROM communityservice WHERE identifier = @identifier', {
-		['@identifier'] = identifier
-	}, function(result)
-		if result[1] then
-			MySQL.Async.execute('UPDATE communityservice SET actions_remaining = @actions_remaining WHERE identifier = @identifier', {
-				['@identifier'] = identifier,
-				['@actions_remaining'] = actions_count
-			})
-		else
-			MySQL.Async.execute('INSERT INTO communityservice (identifier, actions_remaining) VALUES (@identifier, @actions_remaining)', {
-				['@identifier'] = identifier,
-				['@actions_remaining'] = actions_count
-			})
-		end
-	end)
+		MySQL.Async.fetchAll('SELECT * FROM communityservice WHERE identifier = @identifier', {
+			['@identifier'] = tgtIdent
+		}, function(result)
+			if result[1] then
+				MySQL.Async.execute('UPDATE communityservice SET actions_remaining = @actions_remaining WHERE identifier = @identifier', {
+					['@identifier'] = tgtIdent,
+					['@actions_remaining'] = qty
+				})
+			else
+				MySQL.Async.execute('INSERT INTO communityservice (identifier, actions_remaining) VALUES (@identifier, @actions_remaining)', {
+					['@identifier'] = tgtIdent,
+					['@actions_remaining'] = qty
+				})
+			end
+		end)
 
-	TriggerClientEvent('chat:addMessage', -1, { args = { _U('judge'), _U('comserv_msg', GetPlayerName(target), actions_count) }, color = { 147, 196, 109 } })
-	TriggerClientEvent('esx_policejob:unrestrain', target)
-	TriggerClientEvent('esx_communityservice:inCommunityService', target, actions_count)
+		TriggerClientEvent('chat:addMessage', -1, { args = { _U('judge'), _U('comserv_msg', GetPlayerName(tgt), qty) }, color = { 147, 196, 109 } })
+		TriggerClientEvent('esx_policejob:unrestrain', tgt)
+		TriggerClientEvent('esx_communityservice:inCommunityService', tgt, qty)
+	else
+		print(
+			string.format(
+				"^2%s^7 -> [^1%s^7] ^1%s^7 has attempted to remove [^5%s^7] ^5%s^7 from community service via the ^2sendToCommunityService^7 event. The legitimacy check returned ^1false^7 with the reason of ^2%s^7.",
+				GetCurrentResourceName(), src, GetPlayerName(src), tgt, GetPlayerName(tgt), legit["reason"]
+			)
+		)
+	end
 end)
 
 

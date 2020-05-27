@@ -15,11 +15,11 @@ Tired of hackers putting your players in community service? Install this updated
 ### Using Git
 ```
 cd resources
-git clone https://github.com/apoiat/esx_communityservice [esx]/esx_communityservice
+git clone https://github.com/ATG-Github/ESX_CommunityService [esx]/esx_communityservice
 ```
 
 ### Manually
-- Download https://github.com/apoiat/esx_communityservice/archive/master.zip
+- Download https://github.com/ATG-Github/ESX_CommunityService
 - Put it in the `[esx]` directory
 
 

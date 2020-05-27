@@ -2,7 +2,7 @@
 
 An alternative form of punishment and social correction to jail. With this script, you can now send criminals in the central square, to provide community service by cleaning and gardening. Try to escape it and you will get your service extended!
 
-# ESX_CommunityService
+# Security
 Tired of hackers putting your players in community service? Install this updated version with protected server events!
 
 ### Requirements

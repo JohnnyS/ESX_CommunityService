@@ -2,8 +2,10 @@ fx_version 'adamant'
 game 'gta5'
 
 description 'ESX Community Service'
-
+lua54 'yes'
 version '1.1.1'
+
+shared_script {'@es_extended/imports.lua', '@ox_lib/init.lua'}
 
 server_scripts {
 	'@mysql-async/lib/MySQL.lua',
@@ -25,3 +27,4 @@ client_scripts {
 }
 
 dependency 'es_extended'
+

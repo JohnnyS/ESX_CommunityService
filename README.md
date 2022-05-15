@@ -1,94 +1,47 @@
-# Security
-Tired of hackers putting your players in community service? Install this updated version with protected server events!
-- [Security FiveM Forum Thread](https://forum.cfx.re/t/re-release-esx-security-patches-updates-jail-qalle-jail-communityservice/1292760)
+Updated script for my usecase for my server
 
-# ESX_CommunityService
+# Dependency
+ox_lib https://github.com/overextended/ox_lib
 
-An alternative form of punishment and social correction to jail. With this script, you can now send criminals in the central square, to provide community service by cleaning and gardening. Try to escape it and you will get your service extended!
+Mainly used for the command and menu integration with esx_policejob
 
-### Requirements
-* ESX
-* ESX skinchanger
-  * [skinchanger](https://github.com/ESX-Org/skinchanger)
-
-## Download & Installation
-
-### Using Git
-```
-cd resources
-git clone https://github.com/ATG-Github/ESX_CommunityService [esx]/esx_communityservice
-```
-
-### Manually
-- Download https://github.com/ATG-Github/ESX_CommunityService/releases/download/v2/esx_communityservice.zip
-- Put it in the `[esx]` directory
-
-
-## Installation
-- Import `esx_communityservice.sql` in your database
-- Add this in your server.cfg :
-
-```
-start esx_communityservice
-```
-## How to apply community service.
-
-- Use the `esx_communityservice:sendToCommunityService(target, service_count)` server trigger.
-- Use the `/comserv player_id service_count` command (only admins).
-- Use the `/endcomserv player_id` to finish a player's community service (only admins).
-
-
-
-# How to add to policejob menu.
-
-Example in `esx_policejob: client/main.lua`:
+# Integrate with police job
 
 ```lua
--- ADDITION [1]
-{label = _U('fine'),			value = 'fine'},
-{label = _U('unpaid_bills'),	value = 'unpaid_bills'},
--- add code below (don't forget to add ',' before new row)
-{label = "Community Service",	value = 'communityservice'}
-
-
--- ADDITION [2]
-elseif action == 'unpaid_bills' then
-	OpenUnpaidBillsMenu(closestPlayer)
--- add code below
-elseif action == 'communityservice' then
-	SendToCommunityService(GetPlayerServerId(closestPlayer))
-end
-
-
--- ADDITION [3]
--- add this function
-function SendToCommunityService(player)
-	ESX.UI.Menu.Open('dialog', GetCurrentResourceName(), 'Community Service Menu', {
-		title = "Community Service Menu",
-	}, function (data2, menu)
-		local community_services_count = tonumber(data2.value)
-		
-		if community_services_count == nil then
-			ESX.ShowNotification('Invalid services count.')
-		else
-			TriggerServerEvent("esx_communityservice:sendToCommunityService", player, community_services_count)
-			menu.close()
-		end
-	end, function (data2, menu)
-		menu.close()
-	end)
+function SendToCommunityService(player) 
+    local input = lib.inputDialog('Community Service', {'Amount'})
+    if input then
+        local amount = tonumber(input[1])
+        if player then
+            TriggerServerEvent("esx_communityservice:policesendCommunityService", player, amount)
+        else
+            exports['t-notify']:Custom({
+                style  =  'error',
+                duration  =  5000,
+                message  =  'No player nearby',
+                sound  =  true
+            })
+        end     
+    end
 end
 ```
 
+I have it like this in police job to trigger the function
 
-# Legal
-### License
-ESX_CommunityService - A community service script for fivem servers.
+```lua
+AddEventHandler('LSPD:CommunityService', function(data)
+	local closestPlayer, closestPlayerDistance  = ESX.Game.GetClosestPlayer()
+	if closestPlayer ~= -1 and closestPlayerDistance <= 2.0 then
+		SendToCommunityService(GetPlayerServerId(closestPlayer))
+	else
+		exports['t-notify']:Custom({
+			style  =  'error',
+			duration  =  5000,
+			message  =  'No Player Nearby!',
+			sound  =  true
+		})
+	end
+end)
+```
 
-Copyright (C) 2018-2019 Apostolos Iatridis
-
-This program Is free software: you can redistribute it And/Or modify it under the terms Of the GNU General Public License As published by the Free Software Foundation, either version 3 Of the License, Or (at your option) any later version.
-
-This program Is distributed In the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty Of MERCHANTABILITY Or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License For more details.
-
-You should have received a copy Of the GNU General Public License along with this program. If Not, see http://www.gnu.org/licenses/.
+Updated code to use more legacy features but also wanted practice with ox lib stuff since my server is based off of them. What I need help with or want for the future of this script is to make the resmon lower when in community service curently is ~0.20 but when not in use its 0.00. Could potentially add qtarget instead of pressing E but future thing.

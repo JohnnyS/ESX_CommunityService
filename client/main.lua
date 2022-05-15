@@ -1,6 +1,7 @@
 -- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
 --					Created By: apoiat   				  --
 --			 Protected By: ATG-Github AKA ATG			  --
+--                Updated by JohnnyS                      --
 -- ~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~=~= --
 
 local Keys = {
@@ -15,7 +16,6 @@ local Keys = {
   ["NENTER"] = 201, ["N4"] = 108, ["N5"] = 60, ["N6"] = 107, ["N+"] = 96, ["N-"] = 97, ["N7"] = 117, ["N8"] = 61, ["N9"] = 118
 }
 
-ESX = nil
 INPUT_CONTEXT = 51
 
 local isSentenced = false
@@ -30,33 +30,43 @@ local vassour_net = nil
 local spatulamodel = "bkr_prop_coke_spatula_04"
 local spatula_net = nil
 
-Citizen.CreateThread(function()
-	while ESX == nil do
-		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-		Citizen.Wait(0)
+
+--[[Citizen.CreateThread(function()
+	Citizen.Wait(2000) --Wait for mysql-async
+	TriggerServerEvent('esx_communityservice:checkIfSentenced')
+	print("Checks if identified")
+end)]]
+
+RegisterNetEvent('esx:playerLoaded')
+AddEventHandler('esx:playerLoaded', function(xPlayer)
+    ESX.PlayerData = xPlayer
+    ESX.PlayerLoaded = true
+	TriggerServerEvent('esx_communityservice:checkIfSentenced')
+	--print("Checked if you are sentenced")
+end)
+
+RegisterNetEvent('esx:onPlayerLogout')
+AddEventHandler('esx:onPlayerLogout', function()
+	ESX.PlayerLoaded = false
+	ESX.PlayerData = {}
+end)
+
+AddEventHandler('onResourceStart', function(resource)
+	if resource == GetCurrentResourceName() then
+		Wait(5000)
+		TriggerServerEvent('esx_communityservice:checkIfSentenced')
+		--print("Checking RESOURCE STARTED")
 	end
 end)
 
-
-Citizen.CreateThread(function()
-	Citizen.Wait(2000) --Wait for mysql-async
-	TriggerServerEvent('esx_communityservice:checkIfSentenced')
-end)
-
-
 function FillActionTable(last_action)
-
 	while #availableActions < 5 do
-
 		local service_does_not_exist = true
-
 		local random_selection = Config.ServiceLocations[math.random(1,#Config.ServiceLocations)]
 
 		for i = 1, #availableActions do
 			if random_selection.coords.x == availableActions[i].coords.x and random_selection.coords.y == availableActions[i].coords.y and random_selection.coords.z == availableActions[i].coords.z then
-
 				service_does_not_exist = false
-
 			end
 		end
 
@@ -67,11 +77,8 @@ function FillActionTable(last_action)
 		if service_does_not_exist then
 			table.insert(availableActions, random_selection)
 		end
-
 	end
-
 end
-
 
 RegisterNetEvent('esx_communityservice:inCommunityService')
 AddEventHandler('esx_communityservice:inCommunityService', function(actions_remaining)
@@ -86,29 +93,23 @@ AddEventHandler('esx_communityservice:inCommunityService', function(actions_rema
 	FillActionTable()
 	print(":: Available Actions: " .. #availableActions)
 
-
-
 	ApplyPrisonerSkin()
 	ESX.Game.Teleport(playerPed, Config.ServiceLocation)
 	isSentenced = true
 	communityServiceFinished = false
 
 	while actionsRemaining > 0 and communityServiceFinished ~= true do
-
-
 		if IsPedInAnyVehicle(playerPed, false) then
 			ClearPedTasksImmediately(playerPed)
 		end
-
 		Citizen.Wait(20000)
-
 		if GetDistanceBetweenCoords(GetEntityCoords(playerPed), Config.ServiceLocation.x, Config.ServiceLocation.y, Config.ServiceLocation.z) > 45 then
 			ESX.Game.Teleport(playerPed, Config.ServiceLocation)
-				TriggerEvent('chat:addMessage', { args = { _U('judge'), _U('escape_attempt') }, color = { 147, 196, 109 } })
+				--TriggerEvent('chat:addMessage', { args = { _U('judge'), _U('escape_attempt') }, color = { 147, 196, 109 } })
+				TriggerServerEvent('esx_communityservice:escapemsg')
 				TriggerServerEvent('esx_communityservice:extendService')
 				actionsRemaining = actionsRemaining + Config.ServiceExtensionOnEscape
 		end
-
 	end
 
 	TriggerServerEvent('esx_communityservice:finishCommunityService', -1)
@@ -117,10 +118,8 @@ AddEventHandler('esx_communityservice:inCommunityService', function(actions_rema
 
 	ESX.TriggerServerCallback('esx_skin:getPlayerSkin', function(skin)
 		TriggerEvent('skinchanger:loadSkin', skin)
-		end)
+	end)
 end)
-
-
 
 RegisterNetEvent('esx_communityservice:finishCommunityService')
 AddEventHandler('esx_communityservice:finishCommunityService', function(source)
@@ -129,8 +128,6 @@ AddEventHandler('esx_communityservice:finishCommunityService', function(source)
 	actionsRemaining = 0
 end)
 
-
-
 Citizen.CreateThread(function()
 	while true do
 		:: start_over ::
@@ -138,19 +135,21 @@ Citizen.CreateThread(function()
 
 		if actionsRemaining > 0 and isSentenced then
 			draw2dText( _U('remaining_msg', ESX.Math.Round(actionsRemaining)), { 0.175, 0.955 } )
-			DrawAvailableActions()
+			
 			DisableViolentActions()
 
 			local pCoords    = GetEntityCoords(PlayerPedId())
 
 			for i = 1, #availableActions do
 				local distance = GetDistanceBetweenCoords(pCoords, availableActions[i].coords, true)
+					
+				if distance < 10.0 then
+					DrawAvailableActions()
+				end
 
 				if distance < 1.5 then
 					DisplayHelpText(_U('press_to_start'))
-
-
-					if(IsControlJustReleased(1, 38))then
+					if (IsControlJustReleased(1, 38)) then
 						tmp_action = availableActions[i]
 						RemoveAction(tmp_action)
 						FillActionTable(tmp_action)
@@ -208,9 +207,7 @@ Citizen.CreateThread(function()
 	end
 end)
 
-
 function RemoveAction(action)
-
 	local action_pos = -1
 
 	for i=1, #availableActions do
@@ -227,38 +224,23 @@ function RemoveAction(action)
 
 end
 
-
-
-
-
-
-
 function DisplayHelpText(str)
 	SetTextComponentFormat("STRING")
 	AddTextComponentString(str)
 	DisplayHelpTextFromStringLabel(0, 0, 1, -1)
 end
 
-
 function DrawAvailableActions()
-
 	for i = 1, #availableActions do
---{ r = 50, g = 50, b = 204 }
+	--{ r = 50, g = 50, b = 204 }
 		--DrawMarker(21, Config.ServiceLocations[i].coords, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 255, 0, 0, 100, false, true, 2, true, false, false, true)
 		DrawMarker(21, availableActions[i].coords, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 50, 50, 204, 100, false, true, 2, true, false, false, false)
 
 		--DrawMarker(20, Config.ServiceLocations[i].coords, -1, 0.0, 0.0, 0, 0.0, 0.0, 1.0, 1.0, 1.0, 0, 162, 250, 80, true, true, 2, 0, 0, 0, 0)
 	end
-
 end
 
-
-
-
-
-
 function DisableViolentActions()
-
 	local playerPed = PlayerPedId()
 
 	if disable_actions == true then
@@ -272,7 +254,6 @@ function DisableViolentActions()
     DisableControlAction(0, 106, true) -- Disable in-game mouse controls
     DisableControlAction(0, 140, true)
 	DisableControlAction(0, 141, true)
-	DisableControlAction(0, 142, true)
 
 	if IsDisabledControlJustPressed(2, 37) then --if Tab is pressed, send error message
 		SetCurrentPedWeapon(playerPed,GetHashKey("WEAPON_UNARMED"),true) -- if tab is pressed it will set them to unarmed (this is to cover the vehicle glitch until I sort that all out)
@@ -281,18 +262,13 @@ function DisableViolentActions()
 	if IsDisabledControlJustPressed(0, 106) then --if LeftClick is pressed, send error message
 		SetCurrentPedWeapon(playerPed,GetHashKey("WEAPON_UNARMED"),true) -- If they click it will set them to unarmed
 	end
-
 end
 
-
 function ApplyPrisonerSkin()
-
 	local playerPed = PlayerPedId()
 
 	if DoesEntityExist(playerPed) then
-
-		Citizen.CreateThread(function()
-
+		--Citizen.CreateThread(function()
 			TriggerEvent('skinchanger:getSkin', function(skin)
 				if skin.sex == 0 then
 					TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms['prison_wear'].male)
@@ -300,17 +276,14 @@ function ApplyPrisonerSkin()
 					TriggerEvent('skinchanger:loadClothes', skin, Config.Uniforms['prison_wear'].female)
 				end
 			end)
-
-		SetPedArmour(playerPed, 0)
-		ClearPedBloodDamage(playerPed)
-		ResetPedVisibleDamage(playerPed)
-		ClearPedLastWeaponDamage(playerPed)
-		ResetPedMovementClipset(playerPed, 0)
-
-		end)
+			SetPedArmour(playerPed, 0)
+			ClearPedBloodDamage(playerPed)
+			ResetPedVisibleDamage(playerPed)
+			ClearPedLastWeaponDamage(playerPed)
+			ResetPedMovementClipset(playerPed, 0)
+		--end)
 	end
 end
-
 
 function draw2dText(text, pos)
 	SetTextFont(4)
@@ -321,7 +294,6 @@ function draw2dText(text, pos)
 	SetTextEdge(1, 0, 0, 0, 255)
 	SetTextDropShadow()
 	SetTextOutline()
-
 	BeginTextCommandDisplayText('STRING')
 	AddTextComponentSubstringPlayerName(text)
 	EndTextCommandDisplayText(table.unpack(pos))

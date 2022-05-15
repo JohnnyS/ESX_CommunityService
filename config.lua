@@ -36,21 +36,26 @@ Config.Uniforms = {
 	prison_wear = {
 		male = {
 			['tshirt_1'] = 15,  ['tshirt_2'] = 0,
-			['torso_1']  = 146, ['torso_2']  = 0,
+			['torso_1']  = 283, ['torso_2']  = 0,
 			['decals_1'] = 0,   ['decals_2'] = 0,
-			['arms']     = 119, ['pants_1']  = 3,
-			['pants_2']  = 7,   ['shoes_1']  = 12,
-			['shoes_2']  = 12,  ['chain_1']  = 0,
-			['chain_2']  = 0
+			['arms']     = 2, ['pants_1']  = 117,
+			['pants_2']  = 16,   ['shoes_1']  = 48,
+			['shoes_2']  = 0,  ['bproof_1']  = 3,
+			['bproof_2']  = 1, ['chain_1'] = 0,
+			['chain_2'] = 0, ['helmet_1'] = -1,  
+			['helmet_2'] = 0, ['mask_1'] = 0, 
+			['mask_2'] = 0
 		},
 		female = {
-			['tshirt_1'] = 3,   ['tshirt_2'] = 0,
-			['torso_1']  = 38,  ['torso_2']  = 3,
+			['tshirt_1'] = 14,   ['tshirt_2'] = 0,
+			['torso_1']  = 152,  ['torso_2']  = 0,
 			['decals_1'] = 0,   ['decals_2'] = 0,
-			['arms']     = 120,  ['pants_1'] = 3,
-			['pants_2']  = 15,  ['shoes_1']  = 66,
-			['shoes_2']  = 5,   ['chain_1']  = 0,
-			['chain_2']  = 0
+			['arms']     = 4,  ['pants_1'] = 111,
+			['pants_2']  = 16,  ['shoes_1']  = 39,
+			['shoes_2']  = 0,   ['chain_1']  = 0,
+			['chain_2']  = 0, ['helmet_1'] = -1,  
+			['helmet_2'] = 0, ['mask_1'] = 0, 
+			['mask_2'] = 0
 		}
 	}
 }

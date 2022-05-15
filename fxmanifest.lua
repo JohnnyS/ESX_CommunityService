@@ -3,7 +3,7 @@ game 'gta5'
 
 description 'ESX Community Service'
 lua54 'yes'
-version '1.1.1'
+version '2.0'
 
 shared_script {'@es_extended/imports.lua', '@ox_lib/init.lua'}
 

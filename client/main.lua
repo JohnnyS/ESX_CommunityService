@@ -51,13 +51,13 @@ AddEventHandler('esx:onPlayerLogout', function()
 	ESX.PlayerData = {}
 end)
 
-AddEventHandler('onResourceStart', function(resource)
+--[[AddEventHandler('onResourceStart', function(resource) --Mainly used for debugging
 	if resource == GetCurrentResourceName() then
 		Wait(5000)
 		TriggerServerEvent('esx_communityservice:checkIfSentenced')
 		--print("Checking RESOURCE STARTED")
 	end
-end)
+end)]]
 
 function FillActionTable(last_action)
 	while #availableActions < 5 do

@@ -2,6 +2,7 @@ Updated script for my usecase for my server
 
 # Dependency
 ox_lib https://github.com/overextended/ox_lib
+
 Tested with ESX-Legacy 1.6.0
 
 Mainly used for the command and menu integration with esx_policejob
